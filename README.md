@@ -67,5 +67,6 @@ cria a tag `vX.Y.Z` e publica o Release com `solarman.zip`.
 
 ## Licença e atribuição
 
-O código-base é do projeto upstream acima; a licença original deve ser mantida
-(pendência: copiar o arquivo `LICENSE` do upstream para este repositório).
+Apache License 2.0 (ver `LICENSE` e `NOTICE`). O código-base é do projeto upstream
+[StephanJoubert/home_assistant_solarman](https://github.com/StephanJoubert/home_assistant_solarman);
+as modificações deste fork estão descritas acima.
