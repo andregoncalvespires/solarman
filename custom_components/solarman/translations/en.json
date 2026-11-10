@@ -1,0 +1,52 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_host": "Invalid hostname or IP address",
+      "unknown": "Unexpected error"
+    },
+    "step": {
+      "user": {
+        "title": "Inverter connection configuration",
+        "data": {
+          "name": "This name will be prefixed to all parameter values (change as you like)",
+          "inverter_host": "Host (ip or hostname)",
+          "inverter_serial": "Device Serial Number (retrieve from the web interface)",
+          "inverter_port": "Port (usually 8899)",
+          "mb_slaveid": "Modbus Slave ID (usually 1)",
+          "lookup_file": "The yaml file to use for parameter-definition",
+          "use_sun_for_polling": "Skip polling using sun position",
+          "sun_elevation_threshold": "Sun elevation threshold (degrees)"
+        },
+        "data_description": {
+          "use_sun_for_polling": "When enabled, the integration checks Home Assistant's sun position (based on your home's location) and skips querying the inverter while the sun is below the threshold below, instead of retrying and logging warnings all night.",
+          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Inverter connection configuration",
+        "data": {
+          "name": "This name will be prefixed to all parameter values (change as you like)",
+          "inverter_host": "Host (ip or hostname)",
+          "inverter_serial": "Device Serial Number (retrieve from the web interface)",
+          "inverter_port": "Port (usually 8899)",
+          "mb_slaveid": "Modbus Slave ID (usually 1)",
+          "lookup_file": "The yaml file to use for parameter-definition",
+          "use_sun_for_polling": "Skip polling using sun position",
+          "sun_elevation_threshold": "Sun elevation threshold (degrees)"
+        },
+        "data_description": {
+          "use_sun_for_polling": "When enabled, the integration checks Home Assistant's sun position (based on your home's location) and skips querying the inverter while the sun is below the threshold below, instead of retrying and logging warnings all night.",
+          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight."
+        }
+      }
+    }
+  }
+}

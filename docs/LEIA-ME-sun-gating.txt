@@ -1,0 +1,69 @@
+Arquivos alterados para o polling ciente do sol (sun-gated polling)
+====================================================================
+
+Este zip contém os arquivos que mudaram em relação ao repositório
+original StephanJoubert/home_assistant_solarman (branch main):
+
+  custom_components/solarman/const.py
+  custom_components/solarman/config_flow.py
+  custom_components/solarman/sensor.py
+  custom_components/solarman/solarman.py
+  custom_components/solarman/strings.json
+  custom_components/solarman/translations/en.json
+  custom_components/solarman/translations/pt-BR.json
+
+IMPORTANTE: a versão instalada na sua HA parece ser mais antiga que a
+branch "main" do GitHub usada como base deste patch - o services.py da
+sua instalação exige register_services(hass, inverter), enquanto o
+main atual só usa register_services(hass) (procura o inversor por
+device_id a cada chamada de serviço). sensor.py agora chama
+register_services através de _register_services_compat(), que tenta
+primeiro com o inverter e cai para a forma sem argumento se seu
+services.py não aceitar - funciona nas duas versões sem precisar tocar
+em services.py. Atenção: se você tiver mais de uma entrada
+(vários inversores) e o seu services.py for a versão antiga (2
+argumentos), os serviços read/write_holding_register podem acabar
+sempre mirando o último inversor configurado - limitação da versão
+antiga do services.py, não deste patch.
+
+Resumo das demais mudanças em sensor.py:
+1. Sun-gating: repassa hass/use_sun/sun_elevation_threshold ao criar o Inverter.
+2. Blocking call corrigido: a antiga _do_setup_platform foi dividida em
+   _build_sensors (só monta as entidades + retorna o inverter, roda no
+   executor via hass.async_add_executor_job) e a chamada de
+   async_add_entities()/register_services() que volta a rodar no event
+   loop, de dentro de async_setup_platform/async_setup_entry.
+3. SyntaxWarning: re.match("\S+", uom) virou re.match(r"\S+", uom).
+As correções 2 e 3 já existiam como bugs no repositório original e não
+têm relação com o sun-gating; foram encontradas e corrigidas durante os
+testes deste ajuste.
+
+strings.json e as traduções corrigem os rótulos/descrições dos campos na
+tela de "Configurar" (que antes mostravam o nome bruto da chave).
+
+Os demais arquivos da integração (scanner.py, services.py, __init__.py,
+manifest.json, inverter_definitions/*.yaml) NÃO mudam e não estão neste
+zip.
+
+Como aplicar
+-------------
+1. Faça um backup da pasta atual (ex.: copie
+   config/custom_components/solarman para solarman.bak).
+2. Extraia este zip na pasta "config" do Home Assistant, deixando o
+   unzip sobrescrever os arquivos acima dentro de
+   config/custom_components/solarman/.
+3. Reinicie o Home Assistant (ou recarregue a integração Solarman em
+   Configurações > Dispositivos e Serviços).
+4. Vá em Configurações > Dispositivos e Serviços > Solarman > Configurar
+   para ver os novos campos, agora com rótulo e descrição em português.
+5. Confira nos logs que nenhum dos warnings/erros anteriores (blocking
+   call, SyntaxWarning, "loop is not the running loop",
+   "register_services() missing 1 required positional argument")
+   aparece numa recarga/reinício subsequente, e que os sensores e os
+   serviços continuam funcionando normalmente.
+
+Detalhes da mudança, diagnóstico dos problemas e passos de teste estão
+no documento "proposta-sun-gated-polling.md" enviado junto com este
+pacote. O arquivo "sun_gated_polling.patch" é o mesmo conteúdo em
+formato de diff unificado (git apply), útil se for propor isso via Pull
+Request no repositório original.
