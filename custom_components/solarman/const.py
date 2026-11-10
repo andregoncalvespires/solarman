@@ -31,4 +31,22 @@ DEFAULT_USE_SUN = True
 # stay up a little after sunset, so 0° would clip real data at the edges.
 DEFAULT_SUN_ELEVATION_THRESHOLD = -4.0
 
+# --- Derived sensors / PV module monitoring ---
+# AC capacity used for "AC Output Load". 0 = use the inverter's "Rated Power" register.
+CONF_AC_MAX_POWER = 'ac_max_power'
+CONF_PV_MONITOR = 'pv_monitor'
+CONF_PV_MONITORED_INPUTS = 'pv_monitored_inputs'
+CONF_PV_PROBLEM_THRESHOLD = 'pv_problem_threshold'
+CONF_PV_PROBLEM_MINUTES = 'pv_problem_minutes'
+CONF_PV_MIN_POWER = 'pv_min_power'
+CONF_PV_MIN_SUN_ELEVATION = 'pv_min_sun_elevation'
+DEFAULT_AC_MAX_POWER = 0
+DEFAULT_PV_MONITOR = True
+DEFAULT_PV_MONITORED_INPUTS = ['1', '2', '3', '4']
+DEFAULT_PV_PROBLEM_THRESHOLD = 50   # % of the other modules' median output
+DEFAULT_PV_PROBLEM_MINUTES = 30     # minutes of valid samples below threshold
+DEFAULT_PV_MIN_POWER = 50           # W the reference must reach to evaluate
+DEFAULT_PV_MIN_SUN_ELEVATION = 15.0  # degrees
+PV_RECOVERY_MINUTES = 10
+
 SENSOR_PREFIX = 'Solarman'

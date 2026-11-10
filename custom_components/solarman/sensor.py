@@ -9,7 +9,6 @@
 
 import logging
 import re
-import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, EntityCategory
@@ -17,49 +16,14 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import *
-from .solarman import Inverter
-from .scanner import InverterScanner
-from .services import *
+from .inverter_factory import build_inverter
 
 _LOGGER = logging.getLogger(__name__)
-_inverter_scanner = InverterScanner()
 
 
-def _build_sensors(hass: HomeAssistant, config):
-    """Do all the blocking work (reads the lookup_file yaml, and may hit the
-    network via InverterScanner) and return the list of entities to add.
-    Safe to call from an executor thread - unlike async_add_entities, which
-    must run on the event loop."""
-    _LOGGER.debug(f'sensor.py:_build_sensors: {config}')
-
-    inverter_name = config.get(CONF_NAME)
-    inverter_host = config.get(CONF_INVERTER_HOST)
-    if inverter_host == "0.0.0.0":
-        inverter_host = _inverter_scanner.get_ipaddress()
-        
-   
-    inverter_port = config.get(CONF_INVERTER_PORT)
-    inverter_sn = config.get(CONF_INVERTER_SERIAL)
-    if inverter_sn == 0:
-        inverter_sn = _inverter_scanner.get_serialno()
-
-    inverter_mb_slaveid = config.get(CONF_INVERTER_MB_SLAVEID)
-    if not inverter_mb_slaveid:
-        inverter_mb_slaveid = DEFAULT_INVERTER_MB_SLAVEID
-    lookup_file = config.get(CONF_LOOKUP_FILE)
-    path = hass.config.path('custom_components/solarman/inverter_definitions/')
-    use_sun = config.get(CONF_USE_SUN, DEFAULT_USE_SUN)
-    sun_elevation_threshold = config.get(CONF_SUN_ELEVATION_THRESHOLD, DEFAULT_SUN_ELEVATION_THRESHOLD)
-
-    # Check input configuration.
-    if inverter_host is None:
-        raise vol.Invalid('configuration parameter [inverter_host] does not have a value')
-    if inverter_sn is None:
-        raise vol.Invalid('configuration parameter [inverter_serial] does not have a value')
-
-    inverter = Inverter(path, inverter_sn, inverter_host, inverter_port, inverter_mb_slaveid, lookup_file,
-                         hass=hass, use_sun=use_sun, sun_elevation_threshold=sun_elevation_threshold)
-    #  Prepare the sensor entities.
+def _build_entities(inverter_name, inverter):
+    """Build the sensor entities for an inverter (no I/O)."""
+    inverter_sn = inverter.serial
     hass_sensors = []
     for sensor in inverter.get_sensors():
         try:
@@ -72,42 +36,24 @@ def _build_sensors(hass: HomeAssistant, config):
             raise
     hass_sensors.append(SolarmanStatusDiag(inverter_name, inverter, "status_lastUpdate", inverter_sn))
     hass_sensors.append(SolarmanStatusDiag(inverter_name, inverter, "status_connection", inverter_sn))
-
-    _LOGGER.debug(f'sensor.py:_build_sensors: built {len(hass_sensors)} entities')
-    _LOGGER.debug(hass_sensors)
-
-    return hass_sensors, inverter
+    _LOGGER.debug(f'sensor.py:_build_entities: built {len(hass_sensors)} entities')
+    return hass_sensors
 
 
-def _register_services_compat(hass: HomeAssistant, inverter):
-    """Call register_services() in a way that works across integration
-    releases: some releases require register_services(hass, inverter),
-    others (which look the inverter up per-service-call by device_id)
-    only accept register_services(hass)."""
-    try:
-        register_services(hass, inverter)
-    except TypeError:
-        register_services(hass)
-
-
-# Set-up from configuration.yaml
-async def async_setup_platform(hass: HomeAssistant, config, async_add_entities : AddEntitiesCallback, discovery_info=None):
+# Set-up from configuration.yaml (legacy; binary sensors need a config entry)
+async def async_setup_platform(hass: HomeAssistant, config, async_add_entities: AddEntitiesCallback, discovery_info=None):
     _LOGGER.debug(f'sensor.py:async_setup_platform: {config}')
-    # _build_sensors does blocking I/O (reads the lookup_file yaml, and may
-    # hit the network via InverterScanner) - keep that off the event loop.
-    # async_add_entities/register_services must stay on the event loop
-    # itself (HA schedules an eager task internally, which requires the
-    # currently-running loop), so they're called here, not inside the job.
-    hass_sensors, inverter = await hass.async_add_executor_job(_build_sensors, hass, config)
-    async_add_entities(hass_sensors)
-    _register_services_compat(hass, inverter)
+    from . import register_services_compat
+    inverter = await hass.async_add_executor_job(build_inverter, hass, config)
+    async_add_entities(_build_entities(config.get(CONF_NAME), inverter))
+    register_services_compat(hass, inverter)
 
-# Set-up from the entries in config-flow
+
+# Set-up from the entries in config-flow (the inverter is built in __init__.py)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     _LOGGER.debug(f'sensor.py:async_setup_entry: {entry.options}')
-    hass_sensors, inverter = await hass.async_add_executor_job(_build_sensors, hass, entry.options)
-    async_add_entities(hass_sensors)
-    _register_services_compat(hass, inverter)
+    inverter = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities(_build_entities(entry.options.get(CONF_NAME), inverter))
 
 
 #############################################################################################################
@@ -206,6 +152,8 @@ class SolarmanSensorText(SolarmanStatus):
             self.p_icon = sensor['icon']
         else:
             self.p_icon = ''
+        if sensor.get('diagnostic'):
+            self._attr_entity_category = EntityCategory.DIAGNOSTIC
         return
 
 

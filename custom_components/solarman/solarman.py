@@ -3,9 +3,13 @@ import threading
 import yaml
 import logging
 import struct
+import time
 from homeassistant.util import Throttle
 from datetime import datetime
 from .parser import ParameterParser
+from .derived import (RATED_POWER_NAME, compute_derived, derived_definitions,
+                      find_pv_inputs, pv_power_name)
+from .pv_monitor import MIN_MONITORED_INPUTS, PVBalanceMonitor
 from .const import *
 from pysolarmanv5 import PySolarmanV5
 
@@ -16,7 +20,8 @@ QUERY_RETRY_ATTEMPTS = 2
 
 class Inverter:
     def __init__(self, path, serial, host, port, mb_slaveid, lookup_file, hass=None,
-                 use_sun=DEFAULT_USE_SUN, sun_elevation_threshold=DEFAULT_SUN_ELEVATION_THRESHOLD):
+                 use_sun=DEFAULT_USE_SUN, sun_elevation_threshold=DEFAULT_SUN_ELEVATION_THRESHOLD,
+                 options=None):
         self._modbus = None
         self._serial = serial
         self.path = path
@@ -37,6 +42,31 @@ class Inverter:
 
         with open(self.path + self.lookup_file) as f:
             self.parameter_definition = yaml.full_load(f)
+
+        # --- derived values and PV module monitoring ---
+        options = options or {}
+        self._ac_max_power_option = float(options.get(CONF_AC_MAX_POWER, DEFAULT_AC_MAX_POWER) or 0)
+        self._rated_power_seen = None
+        self.pv_inputs = find_pv_inputs(self.parameter_definition)
+        monitored = []
+        if options.get(CONF_PV_MONITOR, DEFAULT_PV_MONITOR):
+            wanted = {int(n) for n in options.get(CONF_PV_MONITORED_INPUTS, DEFAULT_PV_MONITORED_INPUTS)}
+            monitored = [n for n in self.pv_inputs if n in wanted]
+        threshold = float(options.get(CONF_PV_PROBLEM_THRESHOLD, DEFAULT_PV_PROBLEM_THRESHOLD)) / 100
+        self.pv_monitor = PVBalanceMonitor(
+            monitored if len(monitored) >= MIN_MONITORED_INPUTS else [],
+            threshold=threshold,
+            on_seconds=float(options.get(CONF_PV_PROBLEM_MINUTES, DEFAULT_PV_PROBLEM_MINUTES)) * 60,
+            off_seconds=PV_RECOVERY_MINUTES * 60,
+            min_power=float(options.get(CONF_PV_MIN_POWER, DEFAULT_PV_MIN_POWER)),
+            min_elevation=float(options.get(CONF_PV_MIN_SUN_ELEVATION, DEFAULT_PV_MIN_SUN_ELEVATION)),
+        )
+        self._derived_definitions = derived_definitions(
+            self.parameter_definition, self.pv_inputs, self.pv_monitor.inputs)
+
+    @property
+    def serial(self):
+        return self._serial
 
     @property
     def status_connection(self):
@@ -69,6 +99,51 @@ class Inverter:
         params.parse(response, start, length)        
 
 
+    def _sun_elevation(self):
+        """Current sun elevation in degrees, or None when unknown."""
+        if self.hass is None:
+            return None
+        sun_state = self.hass.states.get('sun.sun')
+        if sun_state is None:
+            return None
+        try:
+            return float(sun_state.attributes.get('elevation'))
+        except (TypeError, ValueError):
+            return None
+
+    def _ac_max_power(self):
+        if self._ac_max_power_option > 0:
+            return self._ac_max_power_option
+        return self._rated_power_seen
+
+    def _apply_values(self, raw, connected):
+        """Publish a poll result: raw values + derived values, and feed the
+        PV balance monitor. Call with the lock held (or from a single thread)."""
+        values = dict(raw)
+        try:
+            rated = raw.get(RATED_POWER_NAME)
+            if rated:
+                self._rated_power_seen = float(rated)
+            derived = compute_derived(raw, self.pv_inputs, self._ac_max_power(), connected)
+            values.update(derived)
+
+            monitor = self.pv_monitor
+            if monitor.enabled:
+                powers = {n: derived[pv_power_name(n)] for n in monitor.inputs if pv_power_name(n) in derived}
+                readings = {}
+                for n in monitor.inputs:
+                    volt, amp = raw.get(f'PV{n} Voltage'), raw.get(f'PV{n} Current')
+                    if volt is not None and amp is not None:
+                        readings[n] = (float(volt), float(amp))
+                monitor.update(time.time(), powers, self._sun_elevation(), connected, readings)
+                for n in monitor.inputs:
+                    ratio = monitor.ratios.get(n)
+                    if ratio is not None:
+                        values[f'PV{n} Relative Output'] = round(ratio * 100, 1)
+        except Exception as e:  # never let derived values break polling
+            log.warning(f"Computing derived values failed [{type(e).__name__}: {e}]")
+        self._current_val = values
+
     def _sun_allows_polling(self):
         """Return False while the sun is far enough below the horizon that
         the logger is expected to be unpowered/unreachable."""
@@ -100,7 +175,8 @@ class Inverter:
             if self._status_connection != 0:
                 self.disconnect_from_server()
             self._status_connection = 0
-            self._current_val = {}
+            with self.lock:
+                self._apply_values({}, False)
             return
         self.get_statistics()
         return
@@ -145,17 +221,17 @@ class Inverter:
                     log.debug(f"All queries succeeded, exposing updated values.")
                     self.status_lastUpdate = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
                     self._status_connection = 1
-                    self._current_val = params.get_result()
+                    self._apply_values(params.get_result(), True)
                 else:
                     self._status_connection = 0
                     # Clear cached previous results to not report stale and incorrect data
-                    self._current_val = {}
+                    self._apply_values({}, False)
                     self.disconnect_from_server()
             except Exception as e:
                 log.warning(f"Querying inverter {self._serial} at {self._host}:{self._port} failed on connection start with exception [{type(e).__name__}: {e}]")
                 self._status_connection = 0
                 # Clear cached previous results to not report stale and incorrect data
-                self._current_val = {}
+                self._apply_values({}, False)
                 self.disconnect_from_server()
 
     def get_current_val(self):
@@ -163,7 +239,7 @@ class Inverter:
 
     def get_sensors(self):
         params = ParameterParser(self.parameter_definition)
-        return params.get_sensors ()
+        return params.get_sensors () + self._derived_definitions
 
     # Service calls
     def service_read_holding_register(self, register):
