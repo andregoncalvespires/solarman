@@ -1,0 +1,6 @@
+Solarman (Deye) for Home Assistant
+
+This project is a fork of StephanJoubert/home_assistant_solarman
+(https://github.com/StephanJoubert/home_assistant_solarman), licensed under the
+Apache License, Version 2.0, and modified by André Pires (sun-gated polling,
+derived PV sensors, PV module imbalance detection, bug fixes).

@@ -33,6 +33,13 @@ def step_user_data_schema(data: dict[str, Any] = {CONF_NAME: SENSOR_PREFIX, CONF
             vol.Optional(CONF_LOOKUP_FILE, default=data.get(CONF_LOOKUP_FILE)): vol.In(LOOKUP_FILES),
             vol.Optional(CONF_USE_SUN, default=data.get(CONF_USE_SUN, DEFAULT_USE_SUN)): bool,
             vol.Optional(CONF_SUN_ELEVATION_THRESHOLD, default=data.get(CONF_SUN_ELEVATION_THRESHOLD, DEFAULT_SUN_ELEVATION_THRESHOLD)): vol.Coerce(float),
+            vol.Optional(CONF_AC_MAX_POWER, default=data.get(CONF_AC_MAX_POWER, DEFAULT_AC_MAX_POWER)): vol.All(vol.Coerce(float), vol.Range(min=0)),
+            vol.Optional(CONF_PV_MONITOR, default=data.get(CONF_PV_MONITOR, DEFAULT_PV_MONITOR)): bool,
+            vol.Optional(CONF_PV_MONITORED_INPUTS, default=data.get(CONF_PV_MONITORED_INPUTS, DEFAULT_PV_MONITORED_INPUTS)): cv.multi_select({'1': 'PV1', '2': 'PV2', '3': 'PV3', '4': 'PV4'}),
+            vol.Optional(CONF_PV_PROBLEM_THRESHOLD, default=data.get(CONF_PV_PROBLEM_THRESHOLD, DEFAULT_PV_PROBLEM_THRESHOLD)): vol.All(vol.Coerce(float), vol.Range(min=1, max=90)),
+            vol.Optional(CONF_PV_PROBLEM_MINUTES, default=data.get(CONF_PV_PROBLEM_MINUTES, DEFAULT_PV_PROBLEM_MINUTES)): vol.All(vol.Coerce(float), vol.Range(min=1)),
+            vol.Optional(CONF_PV_MIN_POWER, default=data.get(CONF_PV_MIN_POWER, DEFAULT_PV_MIN_POWER)): vol.All(vol.Coerce(float), vol.Range(min=1)),
+            vol.Optional(CONF_PV_MIN_SUN_ELEVATION, default=data.get(CONF_PV_MIN_SUN_ELEVATION, DEFAULT_PV_MIN_SUN_ELEVATION)): vol.Coerce(float),
         },
         extra=vol.PREVENT_EXTRA
     )

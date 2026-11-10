@@ -19,11 +19,25 @@
           "mb_slaveid": "Modbus Slave ID (geralmente 1)",
           "lookup_file": "O arquivo yaml a ser usado para definição de parâmetro",
           "use_sun_for_polling": "Pular consultas usando a posição do sol",
-          "sun_elevation_threshold": "Limiar de elevação do sol (graus)"
+          "sun_elevation_threshold": "Limiar de elevação do sol (graus)",
+          "ac_max_power": "Capacidade de saída CA em W (0 = usar a Potência Nominal do inversor)",
+          "pv_monitor": "Monitorar desequilíbrio entre módulos PV",
+          "pv_monitored_inputs": "Entradas PV com painel conectado",
+          "pv_problem_threshold": "Problema abaixo deste % da mediana dos demais módulos",
+          "pv_problem_minutes": "Minutos abaixo do limite antes de acusar o problema",
+          "pv_min_power": "Potência mínima de referência em W para avaliar",
+          "pv_min_sun_elevation": "Elevação mínima do sol em graus para avaliar"
         },
         "data_description": {
           "use_sun_for_polling": "Quando ativado, a integração verifica a posição do sol calculada pelo Home Assistant (com base na localização da sua casa) e pula a consulta ao inversor enquanto o sol estiver abaixo do limiar definido abaixo, em vez de tentar repetidamente e gerar avisos no log a noite toda.",
-          "sun_elevation_threshold": "Elevação mínima do sol, em graus acima do horizonte, necessária para retomar as consultas. Use um valor negativo pequeno (ex.: -4) para dar margem ao crepúsculo do amanhecer/anoitecer."
+          "sun_elevation_threshold": "Elevação mínima do sol, em graus acima do horizonte, necessária para retomar as consultas. Use um valor negativo pequeno (ex.: -4) para dar margem ao crepúsculo do amanhecer/anoitecer.",
+          "ac_max_power": "Usado no sensor \"AC Output Load\" (potência ÷ capacidade). Deixe 0 para usar o registrador de Potência Nominal.",
+          "pv_monitor": "Ativa o binary sensor \"PV Problem\" quando um módulo produz muito menos que os demais do mesmo inversor. Exige ao menos 3 entradas monitoradas.",
+          "pv_monitored_inputs": "Desmarque entradas sem painel, senão seriam acusadas como problema.",
+          "pv_problem_threshold": "Cada módulo é comparado com a mediana dos outros, então nuvens (que afetam todos igualmente) não disparam o alerta.",
+          "pv_problem_minutes": "Só contam amostras válidas (inversor conectado, sol alto o bastante, potência de referência suficiente).",
+          "pv_min_power": "Abaixo disso a comparação é ignorada (céu encoberto, amanhecer, entardecer).",
+          "pv_min_sun_elevation": "Abaixo desta elevação a comparação é ignorada."
         }
       }
     }
@@ -40,11 +54,25 @@
           "mb_slaveid": "Modbus Slave ID (geralmente 1)",
           "lookup_file": "O arquivo yaml a ser usado para definição de parâmetro",
           "use_sun_for_polling": "Pular consultas usando a posição do sol",
-          "sun_elevation_threshold": "Limiar de elevação do sol (graus)"
+          "sun_elevation_threshold": "Limiar de elevação do sol (graus)",
+          "ac_max_power": "Capacidade de saída CA em W (0 = usar a Potência Nominal do inversor)",
+          "pv_monitor": "Monitorar desequilíbrio entre módulos PV",
+          "pv_monitored_inputs": "Entradas PV com painel conectado",
+          "pv_problem_threshold": "Problema abaixo deste % da mediana dos demais módulos",
+          "pv_problem_minutes": "Minutos abaixo do limite antes de acusar o problema",
+          "pv_min_power": "Potência mínima de referência em W para avaliar",
+          "pv_min_sun_elevation": "Elevação mínima do sol em graus para avaliar"
         },
         "data_description": {
           "use_sun_for_polling": "Quando ativado, a integração verifica a posição do sol calculada pelo Home Assistant (com base na localização da sua casa) e pula a consulta ao inversor enquanto o sol estiver abaixo do limiar definido abaixo, em vez de tentar repetidamente e gerar avisos no log a noite toda.",
-          "sun_elevation_threshold": "Elevação mínima do sol, em graus acima do horizonte, necessária para retomar as consultas. Use um valor negativo pequeno (ex.: -4) para dar margem ao crepúsculo do amanhecer/anoitecer."
+          "sun_elevation_threshold": "Elevação mínima do sol, em graus acima do horizonte, necessária para retomar as consultas. Use um valor negativo pequeno (ex.: -4) para dar margem ao crepúsculo do amanhecer/anoitecer.",
+          "ac_max_power": "Usado no sensor \"AC Output Load\" (potência ÷ capacidade). Deixe 0 para usar o registrador de Potência Nominal.",
+          "pv_monitor": "Ativa o binary sensor \"PV Problem\" quando um módulo produz muito menos que os demais do mesmo inversor. Exige ao menos 3 entradas monitoradas.",
+          "pv_monitored_inputs": "Desmarque entradas sem painel, senão seriam acusadas como problema.",
+          "pv_problem_threshold": "Cada módulo é comparado com a mediana dos outros, então nuvens (que afetam todos igualmente) não disparam o alerta.",
+          "pv_problem_minutes": "Só contam amostras válidas (inversor conectado, sol alto o bastante, potência de referência suficiente).",
+          "pv_min_power": "Abaixo disso a comparação é ignorada (céu encoberto, amanhecer, entardecer).",
+          "pv_min_sun_elevation": "Abaixo desta elevação a comparação é ignorada."
         }
       }
     }

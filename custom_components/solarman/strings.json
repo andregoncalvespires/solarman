@@ -18,11 +18,25 @@
           "mb_slaveid": "[%key:common::config_flow::step::user::data::mb_slaveid%]",
           "lookup_file": "[%key:common::config_flow::step::user::data::lookup_file%]",
           "use_sun_for_polling": "Skip polling using sun position",
-          "sun_elevation_threshold": "Sun elevation threshold (degrees)"
+          "sun_elevation_threshold": "Sun elevation threshold (degrees)",
+          "ac_max_power": "AC output capacity in W (0 = use the inverter's Rated Power)",
+          "pv_monitor": "Monitor PV module imbalance",
+          "pv_monitored_inputs": "PV inputs with a panel connected",
+          "pv_problem_threshold": "Problem below this % of the other modules' median output",
+          "pv_problem_minutes": "Minutes below the threshold before raising the problem",
+          "pv_min_power": "Minimum reference power in W to evaluate",
+          "pv_min_sun_elevation": "Minimum sun elevation in degrees to evaluate"
         },
         "data_description": {
           "use_sun_for_polling": "When enabled, the integration checks Home Assistant's sun position (based on your home's location) and skips querying the inverter while the sun is below the threshold below, instead of retrying and logging warnings all night.",
-          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight."
+          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight.",
+          "ac_max_power": "Used for the \"AC Output Load\" sensor (power ÷ capacity). Leave 0 to use the Rated Power register.",
+          "pv_monitor": "Raises the \"PV Problem\" binary sensor when a module produces much less than the other modules of the same inverter. Needs at least 3 monitored inputs.",
+          "pv_monitored_inputs": "Untick inputs without a panel, otherwise they would be reported as a problem.",
+          "pv_problem_threshold": "Each module is compared with the median of the others, so clouds (which affect all alike) do not trigger it.",
+          "pv_problem_minutes": "Only valid samples count (inverter connected, sun high enough, enough reference power).",
+          "pv_min_power": "Below this the comparison is skipped (overcast, dawn, dusk).",
+          "pv_min_sun_elevation": "Below this elevation the comparison is skipped."
         }
       }
     }
@@ -38,11 +52,25 @@
           "mb_slaveid": "[%key:common::config_flow::step::user::data::mb_slaveid%]",
           "lookup_file": "[%key:common::config_flow::step::user::data::lookup_file%]",
           "use_sun_for_polling": "Skip polling using sun position",
-          "sun_elevation_threshold": "Sun elevation threshold (degrees)"
+          "sun_elevation_threshold": "Sun elevation threshold (degrees)",
+          "ac_max_power": "AC output capacity in W (0 = use the inverter's Rated Power)",
+          "pv_monitor": "Monitor PV module imbalance",
+          "pv_monitored_inputs": "PV inputs with a panel connected",
+          "pv_problem_threshold": "Problem below this % of the other modules' median output",
+          "pv_problem_minutes": "Minutes below the threshold before raising the problem",
+          "pv_min_power": "Minimum reference power in W to evaluate",
+          "pv_min_sun_elevation": "Minimum sun elevation in degrees to evaluate"
         },
         "data_description": {
           "use_sun_for_polling": "When enabled, the integration checks Home Assistant's sun position (based on your home's location) and skips querying the inverter while the sun is below the threshold below, instead of retrying and logging warnings all night.",
-          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight."
+          "sun_elevation_threshold": "Minimum sun elevation, in degrees above the horizon, required before polling resumes. Use a small negative value (e.g. -4) to allow for dawn/dusk twilight.",
+          "ac_max_power": "Used for the \"AC Output Load\" sensor (power ÷ capacity). Leave 0 to use the Rated Power register.",
+          "pv_monitor": "Raises the \"PV Problem\" binary sensor when a module produces much less than the other modules of the same inverter. Needs at least 3 monitored inputs.",
+          "pv_monitored_inputs": "Untick inputs without a panel, otherwise they would be reported as a problem.",
+          "pv_problem_threshold": "Each module is compared with the median of the others, so clouds (which affect all alike) do not trigger it.",
+          "pv_problem_minutes": "Only valid samples count (inverter connected, sun high enough, enough reference power).",
+          "pv_min_power": "Below this the comparison is skipped (overcast, dawn, dusk).",
+          "pv_min_sun_elevation": "Below this elevation the comparison is skipped."
         }
       }
     }
